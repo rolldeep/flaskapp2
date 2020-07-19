@@ -1,13 +1,17 @@
 import json
 import random
 
+
 class Teachers:
     def __init__(self):
         with open('base.json', encoding='utf8') as f:
-            self.teachers = json.load(f)['teachers']
-    
+            data = json.load(f)
+            self.teachers = data['teachers']
+            self.goals = data['goals']
+
     def get_random(self):
         return random.sample(self.teachers, 6)
+
 
 class Teacher:
     def __init__(self, id):
@@ -21,7 +25,7 @@ class Teacher:
         self.price = teachers[self.id]['price']
         self.goals = teachers[self.id]['goals']
         self.free = teachers[self.id]['free']
-        
+
     def get_shedule(self):
         tab = []
         for day, shedule in self.free.items():
@@ -50,6 +54,5 @@ class Teacher:
 
 if __name__ == "__main__":
     t = Teacher(1)
-    
-    
+
     print(t.get_shedule())

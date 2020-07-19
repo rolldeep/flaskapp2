@@ -16,8 +16,9 @@ def main():
 
 @app.route('/goals/<goal>/')
 def get_goal(goal):
-    teachers_list = [teacher for teacher in t.teachers if 'travel' in teacher['goals']]
-    return render_template('goal.html', teachers_list=teachers_list)
+    goal_title = t.goals[goal]
+    teachers_list = [teacher for teacher in t.teachers if goal in teacher['goals']]
+    return render_template('goal.html', teachers_list=teachers_list, goal_title=goal_title)
 
 
 @app.route('/profiles/<id>/')
