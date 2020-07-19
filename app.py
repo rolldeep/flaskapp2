@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request
 
 from teacher import Teacher
-from booking import Booking
+from booking import Booking, TeacherRequest
 from forms import BookingForm, RequestForm
 
 app = Flask(__name__)
@@ -44,11 +44,14 @@ def make_request():
 def get_request():
     if request.method == 'POST':
         form = RequestForm()
+        tr = TeacherRequest(form.goals.data, form.availability.data,
+                            form.clientName.data, form.clientPhone.data)
+        tr.save()
         return render_template('request_done.html',
-                               goal=form.goals.data,
-                               availability=form.availability.data,
-                               clientName=form.clientName.data,
-                               clientPhone=form.clientPhone.data)
+                               goal=tr.goal,
+                               availability=tr.availability,
+                               clientName=tr.clientName,
+                               clientPhone=tr.clientPhone)
 
 
 @app.route('/booking/<id>/<booking_day>/<booking_time>/')
