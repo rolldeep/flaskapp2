@@ -42,7 +42,13 @@ def make_request():
 
 @app.route('/request_done/', methods=['POST'])
 def get_request():
-    return render_template('request_done.html')
+    if request.method == 'POST':
+        form = RequestForm()
+        return render_template('request_done.html',
+                               goal=form.goals.data,
+                               availability=form.availability.data,
+                               clientName=form.clientName.data,
+                               clientPhone=form.clientPhone.data)
 
 
 @app.route('/booking/<id>/<booking_day>/<booking_time>/')
@@ -60,8 +66,8 @@ def booking(id, booking_day, booking_time):
 
 @app.route('/booking_done/', methods=['POST'])
 def get_booking():
-    form = BookingForm()
     if request.method == 'POST':
+        form = BookingForm()
         clientWeekday = form.clientWeekday.data
         clientTime = form.clientTime.data
         clientTeacher = form.clientTeacher.data
@@ -79,4 +85,4 @@ def get_booking():
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
