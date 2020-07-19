@@ -1,22 +1,23 @@
 from flask import Flask, render_template, request
-
-from teacher import Teacher
+import json
+from teachers import Teacher, Teachers
 from booking import Booking, TeacherRequest
 from forms import BookingForm, RequestForm
 
 app = Flask(__name__)
 
 app.secret_key = 'noneofthemwouldgeas19203332'
-
+t = Teachers()
 
 @app.route('/')
 def main():
-    return render_template('index.html')
+    return render_template('index.html', teachers_list=t.get_random())
 
 
 @app.route('/goals/<goal>/')
 def get_goal(goal):
-    return render_template('goal.html')
+    teachers_list = [teacher for teacher in t.teachers if 'travel' in teacher['goals']]
+    return render_template('goal.html', teachers_list=teachers_list)
 
 
 @app.route('/profiles/<id>/')

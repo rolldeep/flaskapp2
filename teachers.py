@@ -1,5 +1,13 @@
 import json
+import random
 
+class Teachers:
+    def __init__(self):
+        with open('base.json', encoding='utf8') as f:
+            self.teachers = json.load(f)['teachers']
+    
+    def get_random(self):
+        return random.sample(self.teachers, 6)
 
 class Teacher:
     def __init__(self, id):
