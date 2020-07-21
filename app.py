@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
 import json
 from teachers import Teacher, Teachers
 from booking import Booking, TeacherRequest
@@ -38,26 +38,29 @@ def get_teacher(id):
                            teacher_id=id)
 
 
-@app.route('/request/')
+@app.route('/request/', methods=['GET', 'POST'])
 def make_request():
     form = RequestForm()
-    return render_template('request.html', form=form)
+    if request.method == 'GET':    
+        return render_template('request.html', form=form)
+    if request.method == 'POST':
+        return render_template('request.html', form=form)
 
 
 @app.route('/request_done/', methods=['POST'])
 def get_request():
     if request.method == 'POST':
         form = RequestForm()
-        if form.validate_on_submit():
-            tr = TeacherRequest(form.goals.data, form.availability.data,
-                                form.clientName.data, form.clientPhone.data)
-            tr.save()
-            return render_template('request_done.html',
-                                   goal=tr.goal,
-                                   availability=tr.availability,
-                                   clientName=tr.clientName,
-                                   clientPhone=tr.clientPhone)
-        return render_template('request.html', form=form)
+        if not form.validate_on_submit():
+            return redirect(url_for('make_request'))
+        tr = TeacherRequest(form.goals.data, form.availability.data,
+                            form.clientName.data, form.clientPhone.data)
+        tr.save()
+        return render_template('request_done.html',
+                               goal=tr.goal,
+                               availability=tr.availability,
+                               clientName=tr.clientName,
+                               clientPhone=tr.clientPhone)
 
 
 @app.route('/booking/<id>/<booking_day>/<booking_time>/')
