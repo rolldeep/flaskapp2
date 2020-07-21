@@ -34,17 +34,18 @@
         <ul class="errors">
           {% for field_name, field_errors in form.errors|dictsort if field_errors %}
           {% for error in field_errors %}
-          <li>{{ form[field_name].label }}: {{ error }}</li>
+          <li>{{ error }}</li>
           {% endfor %}
           {% endfor %}
         </ul>
         {% endif %}
+        {{ form.csrf_token }}  
 
         {{ form.clientName.label(class="mb-1 mt-2") }}
-        {{ form.clientName(class="form-control") }}
+        {{ form.clientName(class="form-control", placeholder="Имя") }}
 
         {{ form.clientPhone.label(class="mb-1 mt-2") }}
-        {{ form.clientPhone(class="form-control") }}
+        {{ form.clientPhone(class="form-control", placeholder="Телефон") }}
         <input type="submit" class="btn btn-primary mt-4 mb-2" value="Найдите мне преподавателя">
       </div>
     </form>

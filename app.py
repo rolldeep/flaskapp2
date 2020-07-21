@@ -9,6 +9,7 @@ app = Flask(__name__)
 app.secret_key = 'noneofthemwouldgeas19203332'
 t = Teachers()
 
+
 @app.route('/')
 def main():
     return render_template('index.html', teachers_list=t.get_random())
@@ -17,7 +18,8 @@ def main():
 @app.route('/goals/<goal>/')
 def get_goal(goal):
     goal_title = t.goals[goal]
-    teachers_list = [teacher for teacher in t.teachers if goal in teacher['goals']]
+    teachers_list = [
+        teacher for teacher in t.teachers if goal in teacher['goals']]
     return render_template('goal.html', teachers_list=teachers_list, goal_title=goal_title)
 
 
@@ -46,14 +48,16 @@ def make_request():
 def get_request():
     if request.method == 'POST':
         form = RequestForm()
-        tr = TeacherRequest(form.goals.data, form.availability.data,
-                            form.clientName.data, form.clientPhone.data)
-        tr.save()
-        return render_template('request_done.html',
-                               goal=tr.goal,
-                               availability=tr.availability,
-                               clientName=tr.clientName,
-                               clientPhone=tr.clientPhone)
+        if form.validate_on_submit():
+            tr = TeacherRequest(form.goals.data, form.availability.data,
+                                form.clientName.data, form.clientPhone.data)
+            tr.save()
+            return render_template('request_done.html',
+                                   goal=tr.goal,
+                                   availability=tr.availability,
+                                   clientName=tr.clientName,
+                                   clientPhone=tr.clientPhone)
+        return render_template('request.html', form=form)
 
 
 @app.route('/booking/<id>/<booking_day>/<booking_time>/')
@@ -80,13 +84,21 @@ def get_booking():
         clientPhone = form.clientPhone.data
         booking = Booking(clientWeekday, clientTime,
                           clientTeacher, clientName, clientPhone)
-        booking.save()
-        return render_template('booking_done.html',
-                               clientWeekday=clientWeekday,
-                               clientTime=clientTime,
-                               clientName=clientName,
-                               clientPhone=clientPhone
-                               )
+        if form.validate_on_submit():
+            booking.save()
+            return render_template('booking_done.html',
+                                   clientWeekday=clientWeekday,
+                                   clientTime=clientTime,
+                                   clientName=clientName,
+                                   clientPhone=clientPhone
+                                   )
+        return render_template('booking.html',
+                               form=form,
+                               name=Teacher(clientTeacher).name,
+                               day=clientWeekday,
+                               hour=clientTime,
+                               picture=Teacher(clientTeacher).picture,
+                               id=clientTeacher)
 
 
 if __name__ == "__main__":

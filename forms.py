@@ -8,19 +8,19 @@ class BookingForm(FlaskForm):
     clientTime = StringField()
     clientTeacher = IntegerField()
     clientName = StringField(
-        'Вас зовут', [InputRequired(), Length(min=1, max=20)])
+        'Вас зовут', [InputRequired(message='Заполните имя'), Length(min=1, max=20, message='Размер имени не должен превышать 20 символов')])
     clientPhone = StringField(
-        'Ваш телефон', [InputRequired(), Length(min=6, max=12)])
+        'Ваш телефон', [InputRequired(message='Введите свой телефон'), Length(min=6, max=12)])
 
 
 class RequestForm(FlaskForm):
     goals = RadioField('goal',
                        choices=[
-                           ("Для путешествий", "Для путешествий"),
-                           ("Для школы", "Для школы"),
-                           ("Для работы", "Для работы"),
-                           ("Для переезда", "Для переезда"),
-                           ("Для программирования", "Для программирования")
+                           ('Для путешествий', 'Для путешествий'),
+                           ('Для школы', 'Для школы'),
+                           ('Для работы', 'Для работы'),
+                           ('Для переезда', 'Для переезда'),
+                           ('Для программирования', 'Для программирования')
                        ])
     availability = RadioField('time',
                               choices=[
@@ -30,6 +30,8 @@ class RequestForm(FlaskForm):
                                   ('7-10 часов в неделю', '7-10 часов в неделю')
                               ])
     clientName = StringField(
-        'Вас зовут', [InputRequired(), Length(min=1, max=20)])
+        'Вас зовут',
+        [InputRequired(message='Заполните имя'),
+         Length(min=1, max=20, message='Имя не должно превышать 20-ти символов')])
     clientPhone = StringField(
-        'Ваш телефон', [InputRequired(), Length(min=6, max=12)])
+        'Ваш телефон', [InputRequired(message='Введите свой телефон'), Length(min=6, max=12, message='Введите валидный телефон')])
