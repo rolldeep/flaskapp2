@@ -41,43 +41,41 @@ def get_teacher(id):
 @app.route('/request/', methods=['GET', 'POST'])
 def make_request():
     form = RequestForm()
-    if request.method == 'GET':    
+    if request.method == 'GET':
         return render_template('request.html', form=form)
-    if request.method == 'POST':
-        return render_template('request.html', form=form)
-
-
-@app.route('/request_done/', methods=['POST'])
-def get_request():
     if request.method == 'POST':
         form = RequestForm()
-        if not form.validate_on_submit():
-            return redirect(url_for('make_request'))
-        tr = TeacherRequest(form.goals.data, form.availability.data,
-                            form.clientName.data, form.clientPhone.data)
-        tr.save()
-        return render_template('request_done.html',
-                               goal=tr.goal,
-                               availability=tr.availability,
-                               clientName=tr.clientName,
-                               clientPhone=tr.clientPhone)
+        if form.validate_on_submit():
+            tr = TeacherRequest(form.goals.data, form.availability.data,
+                                form.clientName.data, form.clientPhone.data)
+            tr.save()
+            return render_template('request_done.html',
+                                   goal=tr.goal,
+                                   availability=tr.availability,
+                                   clientName=tr.clientName,
+                                   clientPhone=tr.clientPhone)
+        return render_template('request.html', form=form)
+
+# Убрал route, для воспроизведения корректной валидации формы
+# @app.route('/request_done/', methods=['POST'])
 
 
 @app.route('/booking/<id>/<booking_day>/<booking_time>/')
 def booking(id, booking_day, booking_time):
     form = BookingForm()
-    teacher = Teacher(int(id))
-    return render_template('booking.html',
-                           form=form,
-                           name=teacher.name,
-                           day=booking_day,
-                           hour=booking_time,
-                           picture=teacher.picture,
-                           id=id)
+    if request.method == 'GET':
+        teacher = Teacher(int(id))
+        return render_template('booking.html',
+                               form=form,
+                               name=teacher.name,
+                               day=booking_day,
+                               hour=booking_time,
+                               picture=teacher.picture,
+                               id=id)
 
 
-@app.route('/booking_done/', methods=['POST'])
-def get_booking():
+@app.route('/booking/', methods=['POST'])
+def save_booking():
     if request.method == 'POST':
         form = BookingForm()
         clientWeekday = form.clientWeekday.data
@@ -93,8 +91,7 @@ def get_booking():
                                    clientWeekday=clientWeekday,
                                    clientTime=clientTime,
                                    clientName=clientName,
-                                   clientPhone=clientPhone
-                                   )
+                                   clientPhone=clientPhone)
         return render_template('booking.html',
                                form=form,
                                name=Teacher(clientTeacher).name,
@@ -102,6 +99,9 @@ def get_booking():
                                hour=clientTime,
                                picture=Teacher(clientTeacher).picture,
                                id=clientTeacher)
+
+# Убрал route, для воспроизведения корректной валидации формы
+# @app.route('/booking_done/', methods=['POST'])
 
 
 if __name__ == "__main__":
