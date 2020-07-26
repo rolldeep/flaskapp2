@@ -19,9 +19,8 @@
           <section class="available">
 
             <h4 class="mb-4 mt-5">Записаться на пробный урок</h4>
-            {% for week_day in free %}
-            {% for day, shedule in week_day.items() %}
-            <h6 class="mt-4">{{ day }}</h6>
+            {% for week_day, shedule in free.items() %}
+            <h6 class="mt-4">{{ week_day }}</h6>
             {% if shedule|length > 0 %}
             {% for hours in shedule %}
             <a href="{{ url_for('booking', id=teacher_id, booking_day=day, booking_time=hours) }}"
@@ -31,8 +30,6 @@
             <p>Нет свободных уроков</p>
             {% endif %}
             {% endfor %}
-            {% endfor %}
-
           </section>
 
         </div>

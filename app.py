@@ -1,11 +1,12 @@
+import os
+import json
+import random
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import JSON
 from flask_migrate import Migrate
-import json
-from booking import TeacherRequest
 from forms import BookingForm, RequestForm
-import os
+
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
@@ -21,9 +22,9 @@ class Teacher(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     about = db.Column(db.String(4000))
-    rating = db.Column(db.Integer)
+    rating = db.Column(db.Float)
     picture = db.Column(db.String(255))
-    price = db.Column(db.Float)
+    price = db.Column(db.Integer)
     goals = db.Column(db.Text)
     free = db.Column(JSON)
 
@@ -51,22 +52,35 @@ class TeacherRequest(db.Model):
     clientPhone = db.Column(db.String(30), nullable=False)
 
 
+def get_random_teachers(qnt):
+    teachers = list()
+    for _ in range(qnt):
+        random_index = random.randint(1, 24)
+        row = db.session.query(Teacher).get(random_index)
+        teachers.append(row)
+    return teachers
+
+
 @app.route('/')
 def main():
-    return render_template('index.html', teachers_list=t.get_random())
+    teachers_list = get_random_teachers(6)
+    return render_template('index.html', teachers_list=teachers_list)
 
 
-# @app.route('/goals/<goal>/')
-# def get_goal(goal):
-#     goal_title = t.goals[goal]
-#     teachers_list = [
-#         teacher for teacher in t.teachers if goal in teacher['goals']]
-#     return render_template('goal.html', teachers_list=teachers_list, goal_title=goal_title)
+@app.route('/goals/<goal>/')
+def get_goal(goal):
+    goal_title = goal
+    teachers_list = db.session.query(Teacher)\
+        .filter(goal in Teacher.goals)\
+        .order_by(Teacher.rating.desc())
+    return render_template('goal.html',
+                           teachers_list=teachers_list,
+                           goal_title=goal_title)
 
 
 @app.route('/profiles/<id>/')
 def get_teacher(id):
-    teacher = Teacher(int(id))
+    teacher = db.session.query(Teacher).get_or_404(int(id))
     goals_string = ', '.join(teacher.goals)
     return render_template('profile.html',
                            name=teacher.name,
@@ -75,7 +89,7 @@ def get_teacher(id):
                            price=teacher.price,
                            picture=teacher.picture,
                            description=teacher.about,
-                           free=teacher.get_shedule(),
+                           free=teacher.free,
                            teacher_id=id)
 
 
@@ -87,9 +101,12 @@ def make_request():
     if request.method == 'POST':
         form = RequestForm()
         if form.validate_on_submit():
-            tr = TeacherRequest(form.goals.data, form.availability.data,
-                                form.clientName.data, form.clientPhone.data)
-            tr.save()
+            tr = TeacherRequest(goal=form.goals.data,
+                                availability=form.availability.data,
+                                clientName=form.clientName.data,
+                                clientPhone=form.clientPhone.data)
+            db.session.add(tr)
+            db.session.commit()
             return render_template('request_done.html',
                                    goal=tr.goal,
                                    availability=tr.availability,
@@ -97,69 +114,47 @@ def make_request():
                                    clientPhone=tr.clientPhone)
         return render_template('request.html', form=form)
 
-# Убрал route, для воспроизведения корректной валидации формы
-# @app.route('/request_done/', methods=['POST'])
-
 
 @app.route('/booking/<id>/<booking_day>/<booking_time>/')
 def booking(id, booking_day, booking_time):
     form = BookingForm()
-    if request.method == 'GET':
-        teacher = Teacher(int(id))
-        return render_template('booking.html',
-                               form=form,
-                               name=teacher.name,
-                               day=booking_day,
-                               hour=booking_time,
-                               picture=teacher.picture,
-                               id=id)
+    teacher = db.session.query(Teacher).get(int(id))
+    return render_template('booking.html',
+                           form=form,
+                           name=teacher.name,
+                           day=booking_day,
+                           hour=booking_time,
+                           picture=teacher.picture,
+                           id=id)
 
 
 @app.route('/booking/', methods=['POST'])
 def save_booking():
     if request.method == 'POST':
         form = BookingForm()
-        clientWeekday = form.clientWeekday.data
-        clientTime = form.clientTime.data
-        clientTeacher = form.clientTeacher.data
-        clientName = form.clientName.data
-        clientPhone = form.clientPhone.data
-        booking = Booking(clientWeekday, clientTime,
-                          clientTeacher, clientName, clientPhone)
+        booking = Booking(clientWeekday=form.clientWeekday.data,
+                          clientTime=form.clientTime.data,
+                          clientTeacher=form.clientTeacher.data,
+                          clientName=form.clientName.data,
+                          clientPhone=form.clientPhone.data)
         if form.validate_on_submit():
-            booking.save()
+            db.session.query.add(booking)
             return render_template('booking_done.html',
-                                   clientWeekday=clientWeekday,
-                                   clientTime=clientTime,
-                                   clientName=clientName,
-                                   clientPhone=clientPhone)
+                                   clientWeekday=booking.clientWeekday,
+                                   clientTime=booking.clientTime,
+                                   clientName=booking.clientName,
+                                   clientPhone=booking.clientPhone)
         return render_template('booking.html',
                                form=form,
-                               name=Teacher(clientTeacher).name,
-                               day=clientWeekday,
-                               hour=clientTime,
-                               picture=Teacher(clientTeacher).picture,
-                               id=clientTeacher)
+                               name=db.session.query(Teacher).get(booking.clientTeacher).name,
+                               day=booking.clientWeekday,
+                               hour=booking.clientTime,
+                               picture=db.session.query(Teacher).get(booking.clientTeacher).picture,
+                               id=booking.clientTeacher)
 
 # Убрал route, для воспроизведения корректной валидации формы
 # @app.route('/booking_done/', methods=['POST'])
 
-def fill_db():
-    with open('base.json') as f:
-        teachers = json.load(f)['teachers']
-    for t in teachers:
-        t_db = Teacher(
-            name=t['name'],
-            about=t['about'],
-            rating=t['rating'],
-            picture=t['picture'],
-            price=t['price'],
-            goals=t['goals'],
-            free=t['free']
-        )
-        db.session.add(t_db)
-        db.session.commit()
 
 if __name__ == "__main__":
-    fill_db()
     app.run(debug=True)
