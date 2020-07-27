@@ -225,9 +225,14 @@ def add_goals():
             free=t['free']
         )
         db.session.add(t_db)
-        goals_list = [x for x in re.split(r'\W+', ','.join(t['goals'])) if x != '']
+        goals_list = t['goals']
+        for g in goals_list:
+            print(g)
+            goal = db.session.query(Goal).filter(Goal.goal == g).first()
+            t_db.goals.append(goal)
     
     db.session.commit()
 
 if __name__ == "__main__":
-    app.run()
+    add_goals()
+    # app.run()
