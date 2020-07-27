@@ -34,9 +34,12 @@ GOALS = {"travel": "Для путешествий",
 
 
 goals_association = db.Table('teachers_goals',
-    db.Column('teacher_id', db.Integer, db.ForeignKey('teachers.id'), primary_key=True),
-    db.Column('goal_id', db.Integer, db.ForeignKey('goals.id'), primary_key=True)
-)
+                             db.Column('teacher_id', db.Integer, db.ForeignKey(
+                                 'teachers.id'), primary_key=True),
+                             db.Column('goal_id', db.Integer, db.ForeignKey(
+                                 'goals.id'), primary_key=True)
+                             )
+
 
 class Teacher(db.Model):
     __tablename__ = 'teachers'
@@ -49,7 +52,8 @@ class Teacher(db.Model):
     price = db.Column(db.Integer)
     free = db.Column(JSON)
 
-    goals = db.relationship('Goal', secondary=goals_association, back_populates='teachers')
+    goals = db.relationship(
+        'Goal', secondary=goals_association, back_populates='teachers')
 
 
 class Booking(db.Model):
@@ -82,7 +86,7 @@ class Goal(db.Model):
     goal = db.Column(db.String(255), nullable=False)
     goal_ru = db.Column(db.String(255), nullable=False)
 
-    teacher = db.relationship(
+    teachers = db.relationship(
         'Teacher', secondary=goals_association, back_populates="goals"
     )
 
@@ -192,5 +196,31 @@ def save_booking():
                                id=booking.clientTeacher)
 
 
+def add_goals():
+    with open('base.json') as f:
+        data = json.load(f)
+    for t in data['teachers']:
+        t_db = Teacher(
+            name=t['name'],
+            about=t['about'],
+            rating=t['rating'],
+            picture=t['picture'],
+            price=t['price'],
+            free=t['free']
+        )
+        db.session.add(t_db)
+        goals_list = [x for x in re.split(r'\W+', ','.join(t['goals'])) if x != '']
+        for g in goals_list:
+            gl = Goal(
+                goal=g,
+                goal_ru=GOALS[g]
+            )
+            db.session.add(gl)
+            gl.teachers.append(t_db)
+    db.session.commit()
+
+
+
 if __name__ == "__main__":
+    add_goals()
     app.run(debug=True)
