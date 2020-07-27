@@ -93,7 +93,7 @@ class Goal(db.Model):
 
 def get_random_teachers(qnt):
     teachers = list()
-    random_index = random.sample(range(25, 49), qnt)
+    random_index = random.sample(range(1, 13), qnt)
     for i in random_index:
         row = db.session.query(Teacher).get(i)
         teachers.append(row)
