@@ -6,7 +6,7 @@
 
   <div class="row">
     <div class="col-12 col-lg-10 offset-lg-1 m-auto">
-      {%for teacher in teachers_list|sort(attribute="rating", reverse=True) %}
+      {% for teacher in teachers_list %}
       <div class="card mb-4">
         <div class="card-body">
           <div class="row">
@@ -17,12 +17,12 @@
               <p>{{ teacher['about'] }}</p>
               <a href="{{ url_for('get_teacher', id=teacher['id']) }}"
                 class="btn btn-outline-primary btn-sm mr-3 mb-2">Показать информаци и расписание</a>
-
             </div>
           </div>
         </div>
       </div>
       {% endfor %}
+      {{teachers_id}}
     </div>
   </div>
 
