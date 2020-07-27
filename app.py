@@ -109,9 +109,17 @@ def main():
 @app.route('/goals/<goal>/')
 def get_goal(goal):
     goal_title = GOALS[goal]
-    teachers_list = db.session.query(Teacher)\
-        .filter(Teacher.goals == f'%{goal}%')\
-        .order_by(Teacher.rating.desc())
+    goals = db.session.query(Goal).filter(Goal.goal == goal)
+    teachers_list = []
+    for g in goals:
+        teachers_list.append(g.teachers
+            # {'name': g.teachers.name,
+            #  'rating': g.teachers.rating,
+            #  'picture': g.teachers.picture,
+            #  'price': g.teachers.price,
+            #  'about': g.teachers.about
+            #  }
+        )
     return render_template('goal.html',
                            teachers_list=teachers_list,
                            goal_title=goal_title)
@@ -120,10 +128,9 @@ def get_goal(goal):
 @app.route('/profiles/<id>/')
 def get_teacher(id):
     teacher = db.session.query(Teacher).get_or_404(int(id))
-    goals_list = [x for x in re.split(r'\W+', teacher.goals) if x != '']
     return render_template('profile.html',
                            name=teacher.name,
-                           goals=goals_list,
+                           goals=teacher.goals,
                            rating=teacher.rating,
                            price=teacher.price,
                            picture=teacher.picture,
@@ -196,31 +203,5 @@ def save_booking():
                                id=booking.clientTeacher)
 
 
-def add_goals():
-    with open('base.json') as f:
-        data = json.load(f)
-    for t in data['teachers']:
-        t_db = Teacher(
-            name=t['name'],
-            about=t['about'],
-            rating=t['rating'],
-            picture=t['picture'],
-            price=t['price'],
-            free=t['free']
-        )
-        db.session.add(t_db)
-        goals_list = [x for x in re.split(r'\W+', ','.join(t['goals'])) if x != '']
-        for g in goals_list:
-            gl = Goal(
-                goal=g,
-                goal_ru=GOALS[g]
-            )
-            db.session.add(gl)
-            gl.teachers.append(t_db)
-    db.session.commit()
-
-
-
 if __name__ == "__main__":
-    add_goals()
     app.run(debug=True)
