@@ -233,5 +233,4 @@ def add_goals():
     db.session.commit()
 
 if __name__ == "__main__":
-    add_goals()
-    # app.run()
+    app.run()
