@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import random
 from flask import Flask, render_template, request, redirect, url_for
@@ -11,10 +12,31 @@ from forms import BookingForm, RequestForm
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SQLALCHEMY_ECHO"] = True
 app.config['SECRET_KEY'] = 'noneofthemwouldgeas19203332'
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+WEEK = {
+    'mon': 'Понедельник',
+    'tue': 'Вторник',
+    'wed': 'Среда',
+    'thu': 'Четверг',
+    'fri': 'Пятница',
+    'sat': 'Суббота',
+    'san': 'Воскресенье',
+}
+GOALS = {"travel": "Для путешествий",
+         "study": "Для учебы",
+         "work": "Для работы",
+         "relocate": "Для переезда",
+         "programming": "Для программирования"}
+
+
+goals_association = db.Table('teachers_goals',
+    db.Column('teacher_id', db.Integer, db.ForeignKey('teachers.id'), primary_key=True),
+    db.Column('goal_id', db.Integer, db.ForeignKey('goals.id'), primary_key=True)
+)
 
 class Teacher(db.Model):
     __tablename__ = 'teachers'
@@ -25,8 +47,9 @@ class Teacher(db.Model):
     rating = db.Column(db.Float)
     picture = db.Column(db.String(255))
     price = db.Column(db.Integer)
-    goals = db.Column(db.Text)
     free = db.Column(JSON)
+
+    goals = db.relationship('Goal', secondary=goals_association, back_populates='teachers')
 
 
 class Booking(db.Model):
@@ -46,10 +69,22 @@ class TeacherRequest(db.Model):
     __tablename__ = 'requests'
 
     id = db.Column(db.Integer, primary_key=True)
-    goal = db.Column(db.String(30), nullable=False)
-    availability = db.Column(db.String(30), nullable=False)
-    clientName = db.Column(db.String(30), nullable=False)
-    clientPhone = db.Column(db.String(30), nullable=False)
+    goal = db.Column(db.String(255), nullable=False)
+    availability = db.Column(db.String(255), nullable=False)
+    clientName = db.Column(db.String(255), nullable=False)
+    clientPhone = db.Column(db.String(255), nullable=False)
+
+
+class Goal(db.Model):
+    __tablename__ = 'goals'
+
+    id = db.Column(db.Integer, primary_key=True)
+    goal = db.Column(db.String(255), nullable=False)
+    goal_ru = db.Column(db.String(255), nullable=False)
+
+    teacher = db.relationship(
+        'Teacher', secondary=goals_association, back_populates="goals"
+    )
 
 
 def get_random_teachers(qnt):
@@ -69,9 +104,9 @@ def main():
 
 @app.route('/goals/<goal>/')
 def get_goal(goal):
-    goal_title = goal
+    goal_title = GOALS[goal]
     teachers_list = db.session.query(Teacher)\
-        .filter(goal in Teacher.goals)\
+        .filter(Teacher.goals == f'%{goal}%')\
         .order_by(Teacher.rating.desc())
     return render_template('goal.html',
                            teachers_list=teachers_list,
@@ -81,15 +116,17 @@ def get_goal(goal):
 @app.route('/profiles/<id>/')
 def get_teacher(id):
     teacher = db.session.query(Teacher).get_or_404(int(id))
-    goals_string = ', '.join(teacher.goals)
+    goals_list = [x for x in re.split(r'\W+', teacher.goals) if x != '']
     return render_template('profile.html',
                            name=teacher.name,
-                           goals=goals_string,
+                           goals=goals_list,
                            rating=teacher.rating,
                            price=teacher.price,
                            picture=teacher.picture,
                            description=teacher.about,
                            free=teacher.free,
+                           week=WEEK,
+                           goals_dict=GOALS,
                            teacher_id=id)
 
 
@@ -146,14 +183,13 @@ def save_booking():
                                    clientPhone=booking.clientPhone)
         return render_template('booking.html',
                                form=form,
-                               name=db.session.query(Teacher).get(booking.clientTeacher).name,
+                               name=db.session.query(Teacher).get(
+                                   booking.clientTeacher).name,
                                day=booking.clientWeekday,
                                hour=booking.clientTime,
-                               picture=db.session.query(Teacher).get(booking.clientTeacher).picture,
+                               picture=db.session.query(Teacher).get(
+                                   booking.clientTeacher).picture,
                                id=booking.clientTeacher)
-
-# Убрал route, для воспроизведения корректной валидации формы
-# @app.route('/booking_done/', methods=['POST'])
 
 
 if __name__ == "__main__":

@@ -10,8 +10,11 @@
           <section class="teacher=info">
 
             <h1 class="h2">{{ name }}</h1>
-            <p><span class="badge badge-secondary mr-2">{{ goals }} </span>Рейтинг: {{ rating }} Ставка: {{ price }} /
-              час</p>
+            <p>
+              {% for goal in goals %}
+              <span class="badge badge-secondary mr-2">{{ goals_dict[goal] }} </span>
+              {% endfor %}
+              Рейтинг: {{ rating }} Ставка: {{ price }} / час</p>
             <p>{{ description }}</p>
 
           </section>
@@ -20,7 +23,7 @@
 
             <h4 class="mb-4 mt-5">Записаться на пробный урок</h4>
             {% for week_day, shedule in free.items() %}
-            <h6 class="mt-4">{{ week_day }}</h6>
+            <h6 class="mt-4">{{ week[week_day] }}</h6>
             {% if shedule|length > 0 %}
             {% for hours in shedule %}
             <a href="{{ url_for('booking', id=teacher_id, booking_day=day, booking_time=hours) }}"
