@@ -12,7 +12,7 @@
             <h1 class="h2">{{ name }}</h1>
             <p>
               {% for goal in goals %}
-              <span class="badge badge-secondary mr-2">{{ goals_dict[goal] }} </span>
+              <span class="badge badge-secondary mr-2">{{ goals_dict[goal['goal']] }} </span>
               {% endfor %}
               Рейтинг: {{ rating }} Ставка: {{ price }} / час</p>
             <p>{{ description }}</p>
@@ -26,7 +26,7 @@
             <h6 class="mt-4">{{ week[week_day] }}</h6>
             {% if shedule|length > 0 %}
             {% for hours in shedule %}
-            <a href="{{ url_for('booking', id=teacher_id, booking_day=day, booking_time=hours) }}"
+            <a href="{{ url_for('booking', id=teacher_id, booking_day=week_day, booking_time=hours) }}"
               class="btn btn-outline-success mr-2">{{ hours }} свободно</a>
             {% endfor %}
             {% else %}

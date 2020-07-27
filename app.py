@@ -60,7 +60,7 @@ class Booking(db.Model):
     __tablename__ = 'bookings'
 
     id = db.Column(db.Integer, primary_key=True)
-    weekday = db.Column(db.DateTime(), nullable=False)
+    weekday = db.Column(db.String(255), nullable=False)
     time = db.Column(db.Time(), nullable=False)
     name = db.Column(db.String(255), nullable=False)
     phone = db.Column(db.String(255), nullable=False)
@@ -93,9 +93,9 @@ class Goal(db.Model):
 
 def get_random_teachers(qnt):
     teachers = list()
-    for _ in range(qnt):
-        random_index = random.randint(1, 24)
-        row = db.session.query(Teacher).get(random_index)
+    random_index = random.sample(range(25, 49), qnt)
+    for i in random_index:
+        row = db.session.query(Teacher).get(i)
         teachers.append(row)
     return teachers
 
@@ -111,18 +111,18 @@ def get_goal(goal):
     goal_title = GOALS[goal]
     goals = db.session.query(Goal).filter(Goal.goal == goal)
     teachers_list = []
+    teachers_id = []
     for g in goals:
-        teachers_list.append(g.teachers
-            # {'name': g.teachers.name,
-            #  'rating': g.teachers.rating,
-            #  'picture': g.teachers.picture,
-            #  'price': g.teachers.price,
-            #  'about': g.teachers.about
-            #  }
-        )
+        for t in g.teachers:
+            if t.id in teachers_id:
+                continue
+            else:
+                teachers_list.append(t)
+                teachers_id.append(t.id)
     return render_template('goal.html',
                            teachers_list=teachers_list,
-                           goal_title=goal_title)
+                           goal_title=goal_title,
+                           teachers_id=teachers_id)
 
 
 @app.route('/profiles/<id>/')
@@ -173,6 +173,7 @@ def booking(id, booking_day, booking_time):
                            day=booking_day,
                            hour=booking_time,
                            picture=teacher.picture,
+                           week=WEEK,
                            id=id)
 
 
@@ -180,27 +181,30 @@ def booking(id, booking_day, booking_time):
 def save_booking():
     if request.method == 'POST':
         form = BookingForm()
-        booking = Booking(clientWeekday=form.clientWeekday.data,
-                          clientTime=form.clientTime.data,
-                          clientTeacher=form.clientTeacher.data,
-                          clientName=form.clientName.data,
-                          clientPhone=form.clientPhone.data)
+        booking = Booking(weekday=form.clientWeekday.data,
+                          time=form.clientTime.data,
+                          teacher_id=form.clientTeacher.data,
+                          name=form.clientName.data,
+                          phone=form.clientPhone.data)
         if form.validate_on_submit():
-            db.session.query.add(booking)
+            db.session.add(booking)
+            db.session.commit()
             return render_template('booking_done.html',
-                                   clientWeekday=booking.clientWeekday,
-                                   clientTime=booking.clientTime,
-                                   clientName=booking.clientName,
-                                   clientPhone=booking.clientPhone)
+                                   clientWeekday=booking.weekday,
+                                   clientTime=booking.time,
+                                   clientName=booking.name,
+                                   clientPhone=booking.phone,
+                                   week=WEEK)
         return render_template('booking.html',
                                form=form,
                                name=db.session.query(Teacher).get(
-                                   booking.clientTeacher).name,
-                               day=booking.clientWeekday,
-                               hour=booking.clientTime,
+                                   booking.teacher_id).name,
+                               day=booking.weekday,
+                               hour=booking.time,
                                picture=db.session.query(Teacher).get(
-                                   booking.clientTeacher).picture,
-                               id=booking.clientTeacher)
+                                   booking.teacher_id).picture,
+                               id=booking.teacher_id,
+                               week=WEEK)
 
 
 if __name__ == "__main__":
