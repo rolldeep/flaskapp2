@@ -227,7 +227,6 @@ def add_goals():
         db.session.add(t_db)
         goals_list = t['goals']
         for g in goals_list:
-            print(g)
             goal = db.session.query(Goal).filter(Goal.goal == g).first()
             t_db.goals.append(goal)
     
