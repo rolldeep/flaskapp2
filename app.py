@@ -206,6 +206,28 @@ def save_booking():
                                id=booking.teacher_id,
                                week=WEEK)
 
+def add_goals():
+    with open('base.json') as f:
+        data = json.load(f)
+    for g in data['goals']:
+        gl = Goal(
+            goal=g,
+            goal_ru=GOALS[g]
+        )
+        db.session.add(gl)
+    for t in data['teachers']:
+        t_db = Teacher(
+            name=t['name'],
+            about=t['about'],
+            rating=t['rating'],
+            picture=t['picture'],
+            price=t['price'],
+            free=t['free']
+        )
+        db.session.add(t_db)
+        goals_list = [x for x in re.split(r'\W+', ','.join(t['goals'])) if x != '']
+    
+    db.session.commit()
 
 if __name__ == "__main__":
     app.run()
